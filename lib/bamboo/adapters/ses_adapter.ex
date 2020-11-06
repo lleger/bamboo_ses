@@ -24,6 +24,7 @@ defmodule Bamboo.SesAdapter do
     template = email.private[:template]
     configuration_set_name = email.private[:configuration_set_name]
     template_data = email.private[:template_data]
+    tags = email.private[:message_tags]
 
     case Mail.build_multipart()
          |> Mail.put_from(prepare_address(email.from))
@@ -39,7 +40,8 @@ defmodule Bamboo.SesAdapter do
          |> SES.send_raw_email(
            configuration_set_name: configuration_set_name,
            template: template,
-           template_data: template_data
+           template_data: template_data,
+           tags: tags
          )
          |> ExAws.request(ex_aws_config) do
       {:ok, response} -> response
@@ -100,6 +102,11 @@ defmodule Bamboo.SesAdapter do
   def set_template_data(mail, template_data) when is_map(template_data) do
     Bamboo.Email.put_private(mail, :template_data, Jason.encode!(template_data))
   end
+
+  @doc """
+  Set the SES MessageTags
+  """
+  def set_message_tags(mail, tags), do: Bamboo.Email.put_private(mail, :message_tags, tags)
 
   defp prepare_addresses(recipients), do: Enum.map(recipients, &prepare_address(&1))
 

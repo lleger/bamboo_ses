@@ -192,6 +192,24 @@ defmodule Bamboo.SesAdapterTest do
     |> SesAdapter.deliver(%{})
   end
 
+  test "sets the tags" do
+    expected_request_fn = fn _, _, body, _, _ ->
+      tags =
+        body
+        |> URI.decode_query()
+        |> Map.get("Tags")
+
+      assert tags == [%{"atom_tag" => "foo", "string-tag" => "bar"}]
+      {:ok, %{status_code: 200}}
+    end
+
+    expect(HttpMock, :request, expected_request_fn)
+
+    new_email()
+    |> SesAdapter.set_message_tags(%{:atom_tag => "foo", "string-tag" => "bar"})
+    |> SesAdapter.deliver(%{})
+  end
+
   test "puts headers" do
     expected_request_fn = fn _, _, body, _, _ ->
       message = parse_body(body)
